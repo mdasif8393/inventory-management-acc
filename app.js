@@ -76,6 +76,27 @@ const productSchema = mongoose.Schema({
   timestamps: true
 })
 
+//Mongoose middleware for saving data: pre / post
+productSchema.pre("save", function (next) {
+
+  if (this.quantity == 0) {
+    this.status = "out-of-stock"
+  }
+
+  next();
+})
+
+// productSchema.post("save", function (doc, next) {
+//   console.log("After saving data");
+
+//   next();
+// })
+
+//instance method
+productSchema.methods.logger = function (){
+  console.log(`Data saved for ${this.name}`);
+}
+
 
 //Create Model
 const Product = mongoose.model("Product", productSchema);
@@ -87,7 +108,7 @@ app.get("/", (req, res) => {
 //posting to database
 
 app.post("/api/v1/product", async (req, res, next) => {
-  
+
   try {
     //save
     // const product = new Product(req.body);
@@ -100,6 +121,8 @@ app.post("/api/v1/product", async (req, res, next) => {
 
     //create
     const result = await Product.create(req.body);
+
+    result.logger();
 
     res.status(200).json({
       status: "success",
@@ -115,6 +138,29 @@ app.post("/api/v1/product", async (req, res, next) => {
     })
   }
 
+})
+
+app.get("/api/v1/product", async (req, res, next) => {
+  try{
+    // const products = await Product
+    // .where("name").equals(/\w/)
+    // .where("quantity").gt(100).lt(600)
+    // .limit(2).sort({quantity: -1})
+
+    const product = await Product.findById("63c54e06b34ecfff469558e5")
+
+    res.status(200).json({
+      status: "success",
+      data: product
+    })
+  }
+  catch(error){
+    res.status(400).json({
+      status: "fail",
+      message: "Can't get the data",
+      error: error.message,
+    })
+  }
 })
 
 module.exports = app;
